@@ -1,0 +1,35 @@
+services:
+  target-app:
+    build: ./target_app
+    environment:
+      DEMO_BUG_MODE: ${DEMO_BUG_MODE:-false}
+      DEMO_LATENCY_MS: ${DEMO_LATENCY_MS:-0}
+    ports:
+      - "8001:8001"
+
+  backend:
+    build: ./backend
+    environment:
+      TARGET_BASE_URL: http://target-app:8001
+      DATABASE_URL: sqlite:////data/testguard.db
+      REQUEST_TIMEOUT_SECONDS: ${REQUEST_TIMEOUT_SECONDS:-4}
+      PERFORMANCE_BUDGET_MS: ${PERFORMANCE_BUDGET_MS:-1000}
+    volumes:
+      - testguard-data:/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - target-app
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  testguard-data:
